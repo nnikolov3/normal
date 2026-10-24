@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Validation entry point for the OpenCode kernel pair, agents, and skills.
+set -o errexit -o nounset -o pipefail
+shopt -s inherit_errexit nullglob
+(( BASH_VERSINFO[0] >= 4 )) || { echo "error: bash 4+ required" >&2; exit 1; }
+trap 'echo "error: validate failed on line $LINENO" >&2' ERR
+
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+config_path="${repository_root}/config.toml"
+exec "${repository_root}/.venv/bin/python" -m formal.cli --config "${config_path}" "$@"

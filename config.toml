@@ -1,0 +1,11 @@
+[paths]
+skills_root = "/home/nn/.config/opencode/skills"
+agents_root = "/home/nn/.config/opencode/agents"
+kernel_path = "/home/nn/.opencode/AGENTS.md"
+standards_path = "/home/nn/.opencode/CODING_STANDARDS.md"
+kit_kernel_path = "/home/nn/Dropbox/opencode/AGENTS.md"
+kit_standards_path = "/home/nn/Dropbox/opencode/CODING_STANDARDS.md"
+model_catalog_path = "/home/nn/formal/model-catalog.json"
+
+[exclusions]
+terms = ["converix", "hardware-in-loop"]

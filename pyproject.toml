@@ -1,0 +1,38 @@
+[project]
+name = "formal"
+version = "0.1.0"
+description = "Validation pipeline for the OpenCode kernel pair, agent bindings, and skills"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+validate = "formal.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[build-system]
+requires = ["uv_build>=0.8"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "formal"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "BLE", "UP", "I", "SIM"]
+
+[tool.mypy]
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=formal --cov-report=term-missing --cov-fail-under=100"
