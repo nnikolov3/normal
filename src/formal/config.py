@@ -6,6 +6,8 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+from formal.hermes_gen import load_hermes_projects
+
 
 @dataclass(frozen=True)
 class FormalConfig:
@@ -17,6 +19,7 @@ class FormalConfig:
     kit_standards_path: Path
     model_catalog_path: Path
     exclusion_terms: tuple[str, ...]
+    hermes_projects: tuple[Path, ...]
 
 
 def load_config(config_path: Path) -> FormalConfig:
@@ -32,4 +35,5 @@ def load_config(config_path: Path) -> FormalConfig:
         kit_standards_path=Path(paths["kit_standards_path"]),
         model_catalog_path=Path(paths.get("model_catalog_path", default_catalog)),
         exclusion_terms=tuple(document.get("exclusions", {}).get("terms", [])),
+        hermes_projects=tuple(load_hermes_projects(document)),
     )

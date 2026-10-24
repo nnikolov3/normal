@@ -9,3 +9,11 @@ model_catalog_path = "/home/nn/formal/model-catalog.json"
 
 [exclusions]
 terms = ["converix", "hardware-in-loop"]
+
+[hermes]
+projects = [
+    "/home/nn/naudible",
+    "/home/nn/nanki",
+    "/home/nn/formal",
+    "/home/nn/memories",
+]
