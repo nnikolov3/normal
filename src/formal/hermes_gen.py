@@ -12,6 +12,8 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+from formal.records import ExceptionRecord, Finding
+
 CONTEXT_FILE_NAME = ".hermes.md"
 
 _HEADER_TEMPLATE = """\
@@ -71,6 +73,51 @@ def write_hermes_context(project_dir: Path, context_text: str) -> Path:
     context_path = project_dir / CONTEXT_FILE_NAME
     context_path.write_text(context_text, encoding="utf-8")
     return context_path
+
+
+def check_context_freshness(config: Any) -> list[Finding | ExceptionRecord]:
+    """V7: every configured project's .hermes.md matches its regeneration.
+
+    A Finding fails the run: drift means the deployed artifact no longer states
+    what its canonical sources state. A missing source file is an
+    ExceptionRecord: the check cannot run, and is recorded instead of skipped.
+    """
+    if not config.hermes_projects:
+        return [ExceptionRecord("V7", "hermes.projects", "no hermes projects configured")]
+    outcomes: list[Finding | ExceptionRecord] = []
+    for project_dir in config.hermes_projects:
+        binding_path = project_dir / "AGENTS.md"
+        context_path = project_dir / CONTEXT_FILE_NAME
+        sources = [
+            ("project binding", binding_path),
+            ("kernel", Path(config.kernel_path)),
+            ("coding standards", Path(config.standards_path)),
+        ]
+        missing_sources = [name for name, source_path in sources if not source_path.is_file()]
+        if missing_sources:
+            outcomes.append(
+                ExceptionRecord(
+                    "V7",
+                    str(context_path),
+                    f"cannot verify freshness: missing {', '.join(missing_sources)}",
+                )
+            )
+            continue
+        expected_context = build_project_context_from_paths(
+            project_name=project_dir.name,
+            binding_path=binding_path,
+            kernel_path=Path(config.kernel_path),
+            standards_path=Path(config.standards_path),
+        )
+        if not context_path.is_file():
+            outcomes.append(Finding("V7", str(context_path), "context file not generated"))
+            continue
+        deployed_context = context_path.read_text(encoding="utf-8")
+        if deployed_context != expected_context:
+            outcomes.append(
+                Finding("V7", str(context_path), "drift from regeneration; run bin/hermes-gen")
+            )
+    return outcomes
 
 
 def main() -> None:

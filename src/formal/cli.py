@@ -1,7 +1,8 @@
 """Entry point for the validation pipeline.
 
 Targets: kernel (V4/V5/V6 over the deployed kernel pair), agents (V1/V2/V3/V5),
-skills (V1/V5). Exit 0 = pass with recorded exceptions; 1 = at least one FAIL;
+skills (V1/V5), hermes (V7 context freshness over the configured projects).
+Exit 0 = pass with recorded exceptions; 1 = at least one FAIL;
 2 = usage error.
 """
 
@@ -35,13 +36,19 @@ Outcome = Finding | ExceptionRecord
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="validate", description="Validate OpenCode artifacts")
-    parser.add_argument("targets", nargs="*", choices=["kernel", "agents", "skills", "all"])
+    parser.add_argument(
+        "targets", nargs="*", choices=["kernel", "agents", "skills", "hermes", "all"]
+    )
     parser.add_argument("--all", action="store_true", help="validate every target")
     parser.add_argument("--config", default="config.toml")
     arguments = parser.parse_args(argv)
-    targets = ["kernel", "agents", "skills"] if arguments.all else (arguments.targets or ["all"])
+    targets = (
+        ["kernel", "agents", "skills", "hermes"]
+        if arguments.all
+        else (arguments.targets or ["all"])
+    )
     if "all" in targets:
-        targets = ["kernel", "agents", "skills"]
+        targets = ["kernel", "agents", "skills", "hermes"]
     return run_validation(load_config(Path(arguments.config)), targets=targets)
 
 
@@ -53,12 +60,21 @@ def run_validation(config: FormalConfig, targets: list[str]) -> int:
         outcomes += validate_agents(config)
     if "skills" in targets:
         outcomes += validate_skills(config)
+    if "hermes" in targets:
+        outcomes += validate_hermes(config)
     for outcome in outcomes:
         marker = "FAIL" if isinstance(outcome, Finding) else "EXCEPTION"
         print(f"{marker}: [{outcome.check_id}] {outcome.path}: {outcome.detail}")
     if any(isinstance(outcome, Finding) for outcome in outcomes):
         return 1
     return 0
+
+
+def validate_hermes(config: FormalConfig) -> list[Outcome]:
+    """V7 freshness: deployed .hermes.md files must match regeneration."""
+    from formal.hermes_gen import check_context_freshness
+
+    return check_context_freshness(config)
 
 
 def validate_skills(config: FormalConfig) -> list[Outcome]:
